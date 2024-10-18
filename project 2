@@ -1,0 +1,109 @@
+import java.util.LinkedList;
+
+class CustomHashMap<K, V> {
+    private static final int INITIAL_CAPACITY = 16;
+    private static final float LOAD_FACTOR = 0.75f;
+    
+    private LinkedList<Entry<K, V>>[] buckets;
+    private int size;
+    private int capacity;
+
+    static class Entry<K, V> {
+        K key;
+        V value;
+        Entry(K key, V value) {
+            this.key = key;
+            this.value = value;
+        }
+    }
+
+    public CustomHashMap() {
+        this.capacity = INITIAL_CAPACITY;
+        this.buckets = new LinkedList[capacity];
+        this.size = 0;
+    }
+
+    private int getBucketIndex(K key) {
+        return Math.abs(key.hashCode() % capacity);
+    }
+
+    public void put(K key, V value) {
+        int bucketIndex = getBucketIndex(key);
+        if (buckets[bucketIndex] == null) {
+            buckets[bucketIndex] = new LinkedList<>();
+        }
+
+        for (Entry<K, V> entry : buckets[bucketIndex]) {
+            if (entry.key.equals(key)) {
+                entry.value = value; // Update value if key exists
+                return;
+            }
+        }
+
+        // If key doesn't exist, add a new entry
+        buckets[bucketIndex].add(new Entry<>(key, value));
+        size++;
+
+        // Resize if the load factor exceeds 0.75
+        if ((float) size / capacity > LOAD_FACTOR) {
+            resize();
+        }
+    }
+
+    public V get(K key) {
+        int bucketIndex = getBucketIndex(key);
+        LinkedList<Entry<K, V>> bucket = buckets[bucketIndex];
+
+        if (bucket != null) {
+            for (Entry<K, V> entry : bucket) {
+                if (entry.key.equals(key)) {
+                    return entry.value;
+                }
+            }
+        }
+
+        return null; // Key not found
+    }
+
+    private void resize() {
+        capacity *= 2;
+        LinkedList<Entry<K, V>>[] newBuckets = new LinkedList[capacity];
+
+        for (LinkedList<Entry<K, V>> bucket : buckets) {
+            if (bucket != null) {
+                for (Entry<K, V> entry : bucket) {
+                    int newBucketIndex = Math.abs(entry.key.hashCode() % capacity);
+                    if (newBuckets[newBucketIndex] == null) {
+                        newBuckets[newBucketIndex] = new LinkedList<>();
+                    }
+                    newBuckets[newBucketIndex].add(entry);
+                }
+            }
+        }
+
+        buckets = newBuckets;
+    }
+
+    public int getSize() {
+        return size;
+    }
+
+    public static void main(String[] args) {
+        CustomHashMap<String, Integer> map = new CustomHashMap<>();
+        map.put("apple", 1);
+        map.put("banana", 2);
+        map.put("cherry", 3);
+        map.put("date", 4);
+
+        System.out.println("Value for 'apple': " + map.get("apple"));
+        System.out.println("Value for 'banana': " + map.get("banana"));
+        System.out.println("Value for 'cherry': " + map.get("cherry"));
+        System.out.println("Value for 'date': " + map.get("date"));
+
+        // Test resizing by adding more elements
+        map.put("elderberry", 5);
+        map.put("fig", 6);
+        System.out.println("Value for 'elderberry': " + map.get("elderberry"));
+        System.out.println("Current map size: " + map.getSize());
+    }
+}
